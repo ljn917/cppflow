@@ -19,6 +19,7 @@ namespace cppflow {
 
     class model {
     public:
+        // NOTE: TF_SessionOptions here has to be the same as cppflow::context::set_context_options(opts);
         explicit model(const std::string& filename);
 
         std::vector<std::string> get_operations() const;
@@ -47,7 +48,6 @@ namespace cppflow {
         this->graph = {TF_NewGraph(), TF_DeleteGraph};
 
         // Create the session.
-        std::unique_ptr<TF_SessionOptions, decltype(&TF_DeleteSessionOptions)> session_options = {TF_NewSessionOptions(), TF_DeleteSessionOptions};
         std::unique_ptr<TF_Buffer, decltype(&TF_DeleteBuffer)> run_options = {TF_NewBufferFromString("", 0), TF_DeleteBuffer};
         std::unique_ptr<TF_Buffer, decltype(&TF_DeleteBuffer)> meta_graph = {TF_NewBuffer(), TF_DeleteBuffer};
 
@@ -58,7 +58,7 @@ namespace cppflow {
 
         int tag_len = 1;
         const char* tag = "serve";
-        this->session = {TF_LoadSessionFromSavedModel(session_options.get(), run_options.get(), filename.c_str(),
+        this->session = {TF_LoadSessionFromSavedModel((TF_SessionOptions*)context::get_context_options(), run_options.get(), filename.c_str(),
                                 &tag, tag_len, this->graph.get(), meta_graph.get(), context::get_status()),
                          session_deleter};
 
